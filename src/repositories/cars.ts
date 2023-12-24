@@ -1,8 +1,12 @@
-import { CarRequest } from "../models/dto/car";
 import { Car, CarEntity } from "../models/entity/car";
 
 class CarsRepository {
-  static async getCars(): Promise<Car[]> {
+  // static createCar(carToCreate: Car) {
+  //   throw new Error("Method not implemented.");
+  // }
+  constructor() {}
+
+   async getCars(): Promise<Car[]> {
     //withGraphFetched : Agar data user ikut ke ambil
     const listCars = await CarEntity.query()
       .withGraphFetched("[user,update_by,delete_by]")
@@ -11,7 +15,13 @@ class CarsRepository {
     return listCars;
   }
 
-  static async createCar(car: Car): Promise<Car> {
+  async getCarByID(id: number): Promise<Car | null> {
+    const tweet = await CarEntity.query().findById(id).withGraphFetched("user");
+
+    return tweet || null;
+  }
+
+  async createCar(car: Car): Promise<Car> {
     const createdCar = await CarEntity.query().insert({
       nama: car.nama,
       sewa: car.sewa,
@@ -22,11 +32,11 @@ class CarsRepository {
 
     return createdCar;
   }
+  async deleteCarByID(id: number) {
+    await CarEntity.query().deleteById(id).withGraphFetched("user");
+  }
 
-  static async deleteCar(
-    car_id: number,
-    deleted_by: number
-  ): Promise<Car | null> {
+  async deleteCar(car_id: number, deleted_by: number): Promise<Car | null> {
     const deletedCar = await CarEntity.query()
       .findById(car_id)
       .whereNull("deleted_at");
@@ -42,7 +52,7 @@ class CarsRepository {
     }
   }
 
-  static async updateCar(car_id: number, car: Car): Promise<Car | null> {
+  async updateCar(car_id: number, car: Car): Promise<Car | null> {
     const updateCar = await CarEntity.query()
       .findById(car_id)
       .whereNull("deleted_by");
@@ -63,4 +73,4 @@ class CarsRepository {
   }
 }
 
-export { CarsRepository };
+export default CarsRepository;

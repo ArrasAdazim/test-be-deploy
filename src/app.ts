@@ -8,6 +8,8 @@ import swaggerJsdoc from "swagger-jsdoc";
 import { swaggerConfig } from "./utils/swaggerOption";
 import dotenv from "dotenv";
 import CarsHandler from "./handlers/cars";
+import CarsService from "./services/cars";
+import CarsRepository from "./repositories/cars";
 import cors from "cors";
 dotenv.config();
 
@@ -24,10 +26,17 @@ app.use(express.json());
 
 app.use(cors());
 
+// Init repo
+const carsRepository = new CarsRepository();
+
+// Init services
+const carsService = new CarsService(carsRepository);
+
+
 // Init handlers
 const usersHandler = new UsersHandler();
 const authHandler = new AuthHandler();
-const carsHandler = new CarsHandler();
+const carsHandler = new CarsHandler(carsService);
 
 //Google Oauth
 app.get("/api/auth/login/google", authHandler.loginGoogle);

@@ -7,11 +7,11 @@ const config: { [key: string]: Knex.Config } = {
   development: {
     client: process.env.DB_CLIENT,
     connection: {
-      host: process.env.DB_HOST,
+      // host: process.env.DB_HOST,
       database: process.env.DB_NAME,
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
-      port: Number(process.env.DB_PORT),
+      // port: Number(process.env.DB_PORT),
     },
     pool: {
       min: 2,

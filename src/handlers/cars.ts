@@ -5,8 +5,20 @@ import { CarRequest, CarResponse } from "../models/dto/car";
 import CarsService from "../services/cars";
 
 class CarsHandler {
+  _carsService: CarsService;
+
+  constructor(carsService: CarsService) {
+    this._carsService = carsService;
+
+    // Bind methods, so they can access the properties
+    this.getCars = this.getCars.bind(this);
+    this.createCar = this.createCar.bind(this);
+    this.updateCar = this.updateCar.bind(this);
+    this.deleteCar = this.deleteCar.bind(this);
+  }
+
   async getCars(req: Request, res: Response) {
-    const carsList: CarResponse[] = await CarsService.getCars();
+    const carsList: CarResponse[] = await this._carsService.getCars();
 
     const response: DefaultResponse = {
       status: "OK",
@@ -42,7 +54,7 @@ class CarsHandler {
 
     payload.user_id = req.user.id as number;
 
-    const createdCar: Car = await CarsService.createCar(payload);
+    const createdCar: Car = await this._carsService.createCar(payload);
 
     const response: DefaultResponse = {
       status: "CREATED",
@@ -63,7 +75,7 @@ class CarsHandler {
     payload.updated_by = req.user.id as number;
 
     console.log(payload);
-    const updatedCar: Car | null = await CarsService.updateCar(
+    const updatedCar: Car | null = await this._carsService.updateCar(
       car_id,
       payload
     );
@@ -97,7 +109,7 @@ class CarsHandler {
   async deleteCar(req: Request, res: Response) {
     const car_id: number = parseInt(req.params.id);
     const deleted_by = req.user.id as number;
-    const deletedCar: Car | null = await CarsService.deleteCar(
+    const deletedCar: Car | null = await this._carsService.deleteCar(
       car_id,
       deleted_by
     );

@@ -1,11 +1,17 @@
 import { CarRequest, CarResponse } from "../models/dto/car";
 import { Car } from "../models/entity/car";
-import { CarsRepository } from "../repositories/cars";
+import CarsRepository from "../repositories/cars";
 import cloudinary from "../../config/cloudinary";
 
 class CarsService {
-  static async getCars(): Promise<CarResponse[]> {
-    const listCars = await CarsRepository.getCars();
+  _carsRepository: CarsRepository;
+
+  constructor(carsRepository: CarsRepository) {
+    this._carsRepository = carsRepository;
+  }
+
+   async getCars(): Promise<CarResponse[]> {
+    const listCars = await this._carsRepository.getCars();
 
     const listCarsResponse: CarResponse[] = listCars.map((car) => {
       const carResponse: CarResponse = {
@@ -30,42 +36,66 @@ class CarsService {
     return listCarsResponse;
   }
 
-  static async createCar(car: CarRequest): Promise<Car> {
-    try {
-      const fileBase64 = car.foto?.buffer.toString("base64");
-      const file = `data:${car.foto?.mimetype};base64,${fileBase64}`;
+  async getTweetByID(id: number): Promise<CarResponse> {
+    const car = await this._carsRepository.getCarByID(id);
 
-      // Async await
-      const uploadedFile = await cloudinary.uploader.upload(file); // async
+    let carResponse: CarResponse = {
+      id: 0,
+      nama: "",
+      sewa: "",
+      ukuran: "",
+      foto: "",
+      user: {
+        id: 0,
+        name: "",
+        email: "",
+        profile_picture_file: "",
+      },
+    };
 
-      const carToCreate: Car = {
+    if (car !== null) {
+      carResponse = {
+        id: car.id as number,
         nama: car.nama,
         sewa: car.sewa,
         ukuran: car.ukuran,
-        foto: uploadedFile.url,
-        user_id: car.user_id,
+        foto: car.foto,
+        user: {
+          id: car.user?.id as number,
+          name: car.user?.name as string,
+          email: car.user?.email as string,
+          profile_picture_file: car.user?.profile_picture_url as string,
+        },
       };
-
-      const createdCar = await CarsRepository.createCar(carToCreate);
-
-      return createdCar;
-    } catch (error) {
-      throw error;
     }
+
+    return carResponse;
   }
 
-  static async deleteCar(
-    car_id: number,
-    deleted_by: number
-  ): Promise<Car | null> {
-    const deletedCar = await CarsRepository.deleteCar(car_id, deleted_by);
+  async createCar(car: CarRequest): Promise<Car> {
+    const fileBase64 = car.foto?.buffer.toString("base64");
+    const file = `data:${car.foto?.mimetype};base64,${fileBase64}`;
+
+    const uploadedFileImage = await cloudinary.uploader.upload(file);
+
+    const carToCreate: Car = {
+      nama: car.nama,
+      sewa: car.sewa,
+      ukuran: car.ukuran,
+      foto: uploadedFileImage.url,
+      user_id: car.user_id,
+    };
+    const createdCar = await this._carsRepository.createCar(carToCreate);
+
+    return createdCar;
+  }
+
+  async deleteCar(car_id: number, deleted_by: number): Promise<Car | null> {
+    const deletedCar = await this._carsRepository.deleteCar(car_id, deleted_by);
     return deletedCar;
   }
 
-  static async updateCar(
-    car_id: number,
-    car: CarRequest
-  ): Promise<Car | null> {
+  async updateCar(car_id: number, car: CarRequest): Promise<Car | null> {
     const fileBase64 = car.foto?.buffer.toString("base64");
     const file = `data:${car.foto?.mimetype};base64,${fileBase64}`;
 
@@ -79,7 +109,10 @@ class CarsService {
       updated_by: car.updated_by,
       updated_at: car.updated_at,
     };
-    const updatedCar = await CarsRepository.updateCar(car_id, carToUpdate);
+    const updatedCar = await this._carsRepository.updateCar(
+      car_id,
+      carToUpdate
+    );
     return updatedCar;
   }
 }
